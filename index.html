@@ -10,10 +10,12 @@
     <style>
         body { margin: 0; background-color: #f0f2f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; }
         
+        /* The 3D Viewer */
         model-viewer {
             width: 100%;
             height: 100vh;
             background-color: #ffffff;
+            z-index: 1;
         }
 
         /* --- TOP RIGHT AR BUTTON --- */
@@ -78,23 +80,25 @@
         .feed-btn svg { fill: #f1c40f; } 
         .feed-btn { color: #d4ac0d; font-weight: bold; }
 
-        /* --- BANANA ANIMATION STYLE --- */
-        .falling-banana {
+        /* --- FALLING FOOD ANIMATION --- */
+        .falling-food {
             position: absolute;
-            top: -50px;
-            width: 40px;
-            height: 40px;
-            background-image: url('banana.png'); /* Ensure this file exists! */
-            background-size: contain;
-            background-repeat: no-repeat;
-            z-index: 50;
-            pointer-events: none;
-            animation: fall 2s linear forwards;
+            top: -60px; /* Start above screen */
+            font-size: 45px; /* Big Emoji Size */
+            z-index: 1000; /* On top of EVERYTHING */
+            pointer-events: none; /* Let clicks pass through */
+            /* Animation defined in JS now for randomness */
         }
 
-        @keyframes fall {
+        @keyframes fall-straight {
             0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-            100% { transform: translateY(80vh) rotate(360deg); opacity: 0; }
+            100% { transform: translateY(90vh) rotate(360deg); opacity: 0; }
+        }
+
+        @keyframes fall-wobble {
+            0% { transform: translateY(0) rotate(0deg) translateX(0); opacity: 1; }
+            50% { transform: translateY(45vh) rotate(180deg) translateX(20px); opacity: 1; }
+            100% { transform: translateY(90vh) rotate(360deg) translateX(-20px); opacity: 0; }
         }
 
         #error-message {
@@ -108,7 +112,7 @@
 
     <div id="error-message">Checking AR compatibility...</div>
 
-    <audio id="audio-walk" src="walk.mp3" loop></audio>
+    <audio id="audio-walk" src="walk.mp3"></audio>
     <audio id="audio-trumpet" src="trumpet.mp3"></audio>
 
     <model-viewer 
@@ -128,30 +132,30 @@
             <svg viewBox="0 0 24 24"><path d="M21 16.5l-9-5-9 5v-11l9-5 9 5v11zm-9-13.5l-7.5 4.2v8.8l7.5 4.2 7.5-4.2v-8.8l-7.5-4.2z"/></svg>
             View in Room
         </button>
-
-        <div class="controls">
-            <button class="icon-btn" onclick="toggleAnimation()">
-                <svg id="play-icon" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-                <span>Walk</span>
-            </button>
-            
-            <button class="icon-btn" onclick="playTrumpet()">
-                <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
-                <span>Sound</span>
-            </button>
-
-             <button class="icon-btn feed-btn" onclick="feedElephant()">
-                <svg viewBox="0 0 24 24"><path d="M20.2 17.6l-2.8-7.8c-.4-1.1-1.3-1.9-2.4-2.1-.2 0-.3-.1-.5-.1s-.4 0-.6.1c-1.1.2-2 1.1-2.4 2.1L8.8 17.6c-.3.8.3 1.6 1.1 1.6h1.5c.6 0 1.1-.3 1.4-.8l.7-1.4h4.1l.7 1.4c.3.5.8.8 1.4.8h1.5c.8 0 1.4-.9 1-1.6z"/></svg>
-                <span>Feed</span>
-            </button>
-
-             <button class="icon-btn" onclick="resetView()">
-                <svg viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
-                <span>Reset</span>
-            </button>
-        </div>
         
     </model-viewer>
+
+    <div class="controls">
+        <button class="icon-btn" onclick="toggleAnimation()">
+            <svg id="play-icon" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+            <span>Walk</span>
+        </button>
+        
+        <button class="icon-btn" onclick="playTrumpet()">
+            <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+            <span>Sound</span>
+        </button>
+
+        <button class="icon-btn feed-btn" onclick="feedElephant()">
+            <svg viewBox="0 0 24 24"><path d="M20.2 17.6l-2.8-7.8c-.4-1.1-1.3-1.9-2.4-2.1-.2 0-.3-.1-.5-.1s-.4 0-.6.1c-1.1.2-2 1.1-2.4 2.1L8.8 17.6c-.3.8.3 1.6 1.1 1.6h1.5c.6 0 1.1-.3 1.4-.8l.7-1.4h4.1l.7 1.4c.3.5.8.8 1.4.8h1.5c.8 0 1.4-.9 1-1.6z"/></svg>
+            <span>Feed</span>
+        </button>
+
+        <button class="icon-btn" onclick="resetView()">
+            <svg viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
+            <span>Reset</span>
+        </button>
+    </div>
 
     <script>
         const viewer = document.querySelector('#viewer');
@@ -160,20 +164,19 @@
         const playIcon = document.querySelector('#play-icon');
         const audioWalk = document.getElementById('audio-walk');
         const audioTrumpet = document.getElementById('audio-trumpet');
-
-        // Set volume to be reasonable
+        
+        // Audio Setup
+        audioWalk.loop = true;
         audioWalk.volume = 0.5;
-        audioTrumpet.volume = 1.0;
 
-        // --- 1. AR Logic ---
+        // AR SUPPORT CHECK
         viewer.addEventListener('load', () => {
             if (viewer.canActivateAR) {
                 errorMsg.style.display = 'none';
                 arBtn.style.display = 'flex';
-                
-                // Try to start walking sound if autoplay is on (Browsers might block this until click)
+                // Try auto-play
                 if (!viewer.paused) {
-                    audioWalk.play().catch(e => console.log("Audio waiting for user interaction"));
+                    audioWalk.play().catch(e => console.log("Waiting for user interaction"));
                 }
             } else {
                 errorMsg.innerText = "⚠️ AR not supported on this device/browser.";
@@ -182,49 +185,57 @@
             }
         });
 
-        // --- 2. Interactive Features ---
+        // --- INTERACTIVE FUNCTIONS ---
 
-        // Toggle Walk + Sound
         function toggleAnimation() {
             if (viewer.paused) {
                 viewer.play();
                 audioWalk.play();
-                playIcon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>'; // Pause icon
+                playIcon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>'; 
             } else {
                 viewer.pause();
                 audioWalk.pause();
-                playIcon.innerHTML = '<path d="M8 5v14l11-7z"/>'; // Play icon
+                playIcon.innerHTML = '<path d="M8 5v14l11-7z"/>'; 
             }
         }
 
-        // Play Trumpet Sound
         function playTrumpet() {
-            // Reset to start if already playing
             audioTrumpet.currentTime = 0;
             audioTrumpet.play();
         }
 
-        // Feed Animation (Spawns bananas)
+        // FOOD MENU
+        const foodMenu = ['🍌', '🍎', '🍉', '🌽', '🥬', '🥜'];
+
         function feedElephant() {
-            // Create 5 bananas
-            for (let i = 0; i < 5; i++) {
-                setTimeout(() => createBanana(), i * 200);
+            // Drop 10 items for a feast
+            for (let i = 0; i < 10; i++) {
+                // Random delay between 0 and 1500ms
+                setTimeout(() => createFood(), Math.random() * 1500);
             }
         }
 
-        function createBanana() {
-            const banana = document.createElement('div');
-            banana.classList.add('falling-banana');
+        function createFood() {
+            const food = document.createElement('div');
+            food.classList.add('falling-food');
             
-            // Randomize starting position (left/right)
-            const randomLeft = Math.random() * 80 + 10; // 10% to 90% screen width
-            banana.style.left = randomLeft + '%';
+            // 1. Pick Random Food
+            const randomItem = foodMenu[Math.floor(Math.random() * foodMenu.length)];
+            food.innerText = randomItem;
             
-            document.body.appendChild(banana);
+            // 2. Random Horizontal Position (10% to 90%)
+            const randomLeft = Math.random() * 80 + 10; 
+            food.style.left = randomLeft + '%';
 
-            // Clean up element after animation
+            // 3. Random Animation (Straight or Wobble)
+            const animType = Math.random() > 0.5 ? 'fall-straight' : 'fall-wobble';
+            food.style.animation = `${animType} 2s ease-in forwards`;
+            
+            document.body.appendChild(food);
+
+            // Cleanup
             setTimeout(() => {
-                banana.remove();
+                food.remove();
             }, 2000);
         }
 
@@ -232,7 +243,6 @@
             viewer.cameraOrbit = "0deg 75deg 105%";
             viewer.jumpCameraToGoal();
         }
-
     </script>
 
 </body>
