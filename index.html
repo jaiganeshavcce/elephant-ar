@@ -8,51 +8,88 @@
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
     
     <style>
-        body { margin: 0; background-color: #f0f2f5; font-family: sans-serif; }
+        body { margin: 0; background-color: #f0f2f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; }
         
         model-viewer {
             width: 100%;
             height: 100vh;
-            background-color: #ffffff; /* White background */
+            background-color: #ffffff;
+            --poster-color: #ffffff;
         }
 
-        /* HIGH VISIBILITY BUTTON STYLE */
+        /* --- TOP RIGHT AR BUTTON --- */
         .ar-button {
-            background-color: #007bff; /* Bright Blue */
+            background-color: #007bff;
             color: white;
-            border-radius: 30px;
+            border-radius: 50px;
             border: none;
+            position: absolute;
+            top: 20px;     /* Moved to Top */
+            right: 20px;   /* Moved to Right */
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0,123,255,0.4);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .ar-button:active { transform: scale(0.95); }
+        .ar-button svg { fill: white; width: 18px; height: 18px; }
+
+        /* --- BOTTOM CONTROL BAR --- */
+        .controls {
             position: absolute;
             bottom: 30px;
             left: 50%;
             transform: translateX(-50%);
-            padding: 12px 24px;
-            font-size: 16px;
-            font-weight: bold;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-            display: none; /* Hidden by default until AR is checked */
+            display: flex;
+            gap: 15px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px 20px;
+            border-radius: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            backdrop-filter: blur(5px);
             z-index: 100;
         }
 
-        .ar-button:active {
-            background-color: #0056b3;
+        .icon-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: background 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #555;
+            font-size: 10px;
         }
+
+        .icon-btn:hover { background-color: #f0f0f0; }
+        .icon-btn svg { width: 24px; height: 24px; fill: #333; margin-bottom: 4px; }
 
         /* Error Message Style */
         #error-message {
             position: absolute;
-            top: 20px;
+            top: 80px; /* Below the button */
             left: 50%;
             transform: translateX(-50%);
             background-color: #ffebee;
             color: #c62828;
             padding: 10px 20px;
             border-radius: 8px;
-            border: 1px solid #ef9a9a;
-            display: none; /* Hidden by default */
+            font-size: 14px;
+            display: none;
             width: 80%;
             text-align: center;
             z-index: 99;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
     </style>
 </head>
@@ -68,11 +105,32 @@
         ar-modes="webxr scene-viewer quick-look" 
         camera-controls 
         auto-rotate 
-        shadow-intensity="1">
+        autoplay
+        shadow-intensity="1"
+        ar-scale="auto"
+        ar-placement="floor">
         
         <button slot="ar-button" id="ar-btn" class="ar-button">
-            👋 View in your Space
+            <svg viewBox="0 0 24 24"><path d="M21 16.5l-9-5-9 5v-11l9-5 9 5v11zm-9-13.5l-7.5 4.2v8.8l7.5 4.2 7.5-4.2v-8.8l-7.5-4.2z"/></svg>
+            View in Room
         </button>
+
+        <div class="controls">
+            <button class="icon-btn" onclick="toggleAnimation()">
+                <svg id="play-icon" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                <span>Anim</span>
+            </button>
+            
+            <button class="icon-btn" onclick="toggleRotate()">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
+                <span>Spin</span>
+            </button>
+
+             <button class="icon-btn" onclick="resetView()">
+                <svg viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
+                <span>Reset</span>
+            </button>
+        </div>
         
     </model-viewer>
 
@@ -80,20 +138,50 @@
         const viewer = document.querySelector('#viewer');
         const errorMsg = document.querySelector('#error-message');
         const arBtn = document.querySelector('#ar-btn');
-
-        // Wait for the model to load to check AR support
+        const playIcon = document.querySelector('#play-icon');
+        
+        // --- 1. AR Compatibility Check ---
         viewer.addEventListener('load', () => {
             if (viewer.canActivateAR) {
-                // AR IS Supported
-                errorMsg.style.display = 'none'; // Hide error
-                arBtn.style.display = 'block';   // Show button
+                errorMsg.style.display = 'none';
+                arBtn.style.display = 'flex'; // Use flex to align icon
             } else {
-                // AR IS NOT Supported
-                errorMsg.innerText = "⚠️ Your device or browser does not support Augmented Reality. Try opening this in Chrome on Android or Safari on iOS.";
+                errorMsg.innerText = "⚠️ AR not supported on this device/browser. Try Chrome (Android) or Safari (iOS).";
                 errorMsg.style.display = 'block';
                 arBtn.style.display = 'none';
             }
         });
+
+        // --- 2. Button Logic ---
+        
+        // Toggle Animation (Play/Pause)
+        function toggleAnimation() {
+            if (viewer.paused) {
+                viewer.play();
+                // Change icon to Pause
+                playIcon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>'; 
+            } else {
+                viewer.pause();
+                // Change icon to Play
+                playIcon.innerHTML = '<path d="M8 5v14l11-7z"/>';
+            }
+        }
+
+        // Toggle Rotation
+        function toggleRotate() {
+            if (viewer.autoRotate) {
+                viewer.autoRotate = false;
+            } else {
+                viewer.autoRotate = true;
+            }
+        }
+
+        // Reset Camera
+        function resetView() {
+            viewer.cameraOrbit = "0deg 75deg 105%"; // Reset to default angle
+            viewer.jumpCameraToGoal();
+        }
+
     </script>
 
 </body>
