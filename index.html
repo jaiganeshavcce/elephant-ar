@@ -8,36 +8,60 @@
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
     
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: sans-serif;
-            background-color: #f0f2f5;
-        }
-        /* The container for the 3D model */
+        body { margin: 0; background-color: #f0f2f5; font-family: sans-serif; }
+        
         model-viewer {
             width: 100%;
-            height: 100vh; /* Full screen height */
-            background-color: #f0f2f5;
+            height: 100vh;
+            background-color: #ffffff; /* White background */
         }
-        /* Custom button styling */
+
+        /* HIGH VISIBILITY BUTTON STYLE */
         .ar-button {
-            background-color: white;
-            border-radius: 4px;
+            background-color: #007bff; /* Bright Blue */
+            color: white;
+            border-radius: 30px;
             border: none;
             position: absolute;
             bottom: 30px;
             left: 50%;
             transform: translateX(-50%);
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            display: none; /* Hidden by default until AR is checked */
+            z-index: 100;
+        }
+
+        .ar-button:active {
+            background-color: #0056b3;
+        }
+
+        /* Error Message Style */
+        #error-message {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #ffebee;
+            color: #c62828;
             padding: 10px 20px;
-            font-weight: 500;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.25);
+            border-radius: 8px;
+            border: 1px solid #ef9a9a;
+            display: none; /* Hidden by default */
+            width: 80%;
+            text-align: center;
+            z-index: 99;
         }
     </style>
 </head>
 <body>
 
+    <div id="error-message">Checking AR compatibility...</div>
+
     <model-viewer 
+        id="viewer"
         src="elephant.glb" 
         alt="A 3D model of an elephant" 
         ar 
@@ -46,11 +70,31 @@
         auto-rotate 
         shadow-intensity="1">
         
-        <button slot="ar-button" class="ar-button">
+        <button slot="ar-button" id="ar-btn" class="ar-button">
             👋 View in your Space
         </button>
         
     </model-viewer>
+
+    <script>
+        const viewer = document.querySelector('#viewer');
+        const errorMsg = document.querySelector('#error-message');
+        const arBtn = document.querySelector('#ar-btn');
+
+        // Wait for the model to load to check AR support
+        viewer.addEventListener('load', () => {
+            if (viewer.canActivateAR) {
+                // AR IS Supported
+                errorMsg.style.display = 'none'; // Hide error
+                arBtn.style.display = 'block';   // Show button
+            } else {
+                // AR IS NOT Supported
+                errorMsg.innerText = "⚠️ Your device or browser does not support Augmented Reality. Try opening this in Chrome on Android or Safari on iOS.";
+                errorMsg.style.display = 'block';
+                arBtn.style.display = 'none';
+            }
+        });
+    </script>
 
 </body>
 </html>
