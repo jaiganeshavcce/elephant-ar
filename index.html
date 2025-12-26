@@ -96,8 +96,9 @@
         .yt-btn svg { fill: #FF0000; }
         .info-btn svg { fill: var(--secondary); }
 
-        /* --- AR BUTTON (CRITICAL FIX: Position & Visibility) --- */
-        .ar-button {
+        /* --- AR BUTTON (FORCED VISIBLE) --- */
+        /* Removed strict slot dependency so it always shows */
+        #force-ar-btn {
             background-color: var(--dark);
             color: white;
             border-radius: 50px;
@@ -110,8 +111,8 @@
             font-size: 14px;
             font-weight: 600;
             box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-            z-index: 999; /* Forced High Z-Index */
-            display: flex; /* Default flex, script handles visibility */
+            z-index: 999; /* Super High Z-Index */
+            display: flex; 
             align-items: center;
             gap: 8px;
             cursor: pointer;
@@ -234,13 +235,12 @@
         min-camera-orbit="auto auto 2m"
         max-camera-orbit="auto auto 8m"
         interaction-prompt="none">
-        
-        <button slot="ar-button" id="ar-btn" class="ar-button">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="white"><path d="M21 16.5l-9-5-9 5v-11l9-5 9 5v11zm-9-13.5l-7.5 4.2v8.8l7.5 4.2 7.5-4.2v-8.8l-7.5-4.2z"/></svg>
-            View in Room
-        </button>
-
     </model-viewer>
+
+    <button id="force-ar-btn" onclick="startAR()">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="white"><path d="M21 16.5l-9-5-9 5v-11l9-5 9 5v11zm-9-13.5l-7.5 4.2v8.8l7.5 4.2 7.5-4.2v-8.8l-7.5-4.2z"/></svg>
+        View in Room
+    </button>
 
     <div class="controls">
         <button class="control-item" onclick="toggleWalk(this)">
@@ -269,6 +269,15 @@
         const audioWalk = document.getElementById('audio-walk');
         const audioTrumpet = document.getElementById('audio-trumpet');
 
+        // FORCE AR START
+        function startAR() {
+            if(viewer.canActivateAR) {
+                viewer.activateAR();
+            } else {
+                alert("This device is not capable of AR, or requires an update to 'Google Play Services for AR'.");
+            }
+        }
+
         // --- 1. LOGIN SYSTEM ---
         function handleLogin() {
             const btn = document.getElementById('login-btn');
@@ -276,12 +285,10 @@
             const icon = document.getElementById('g-icon');
             const pic = document.getElementById('user-pic');
 
-            // Simulate Loading
             text.innerText = "Signing in...";
             btn.style.opacity = "0.7";
 
             setTimeout(() => {
-                // Success State
                 text.innerText = "Jaiganesh"; 
                 icon.style.display = "none";
                 pic.style.display = "block";
@@ -291,7 +298,7 @@
             }, 1500);
         }
 
-        // --- 2. ABOUT MODAL ---
+        // --- 2. MODAL ---
         function openModal() { document.getElementById('about-modal').style.display = 'flex'; }
         function closeModal() { document.getElementById('about-modal').style.display = 'none'; }
         
@@ -305,11 +312,8 @@
         function toggleWalk(btn) {
             if (viewer.paused) {
                 viewer.play();
-                // Play audio and handle browser auto-play blocks
-                var playPromise = audioWalk.play();
-                if (playPromise !== undefined) {
-                    playPromise.catch(error => { console.log("Audio waiting for interaction"); });
-                }
+                // Audio plays ONLY if user clicked button (Browser Safety)
+                audioWalk.play().catch(e => console.log("Audio waiting for interaction"));
                 btn.classList.add('active');
             } else {
                 viewer.pause();
@@ -358,27 +362,17 @@
             setTimeout(() => food.remove(), duration * 1000);
         }
 
-        // --- 5. AR CHECKER ---
+        // --- 5. INITIALIZATION ---
         viewer.addEventListener('load', () => {
+            // No longer hiding the button via JS.
+            // If the device does NOT support AR, clicking the button will show an alert.
             const errorMsg = document.getElementById('error-message');
-            const arBtn = document.getElementById('ar-btn');
-
-            if (viewer.canActivateAR) {
-                errorMsg.style.display = 'none';
-                arBtn.style.display = 'flex'; // FORCE VISIBLE
-                
-                // Try playing audio if model auto-played
-                if (!viewer.paused) {
-                    var playPromise = audioWalk.play();
-                    if (playPromise !== undefined) {
-                        playPromise.catch(error => {});
-                    }
-                }
-            } else {
-                errorMsg.innerText = "⚠️ device/browser not supported (Use Chrome/Safari).";
+            
+            if (!viewer.canActivateAR) {
+                errorMsg.innerText = "⚠️ Your device might not support AR.";
                 errorMsg.style.display = 'block';
-                // Note: We hide the button if AR isn't supported to avoid confusion
-                arBtn.style.display = 'none'; 
+            } else {
+                errorMsg.style.display = 'none';
             }
         });
     </script>
