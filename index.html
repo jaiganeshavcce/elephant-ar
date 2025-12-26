@@ -31,7 +31,7 @@
             box-sizing: border-box;
             z-index: 200;
             background: linear-gradient(180deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 100%);
-            pointer-events: none; /* Let clicks pass through to 3D model where empty */
+            pointer-events: none; 
         }
 
         .brand { pointer-events: auto; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
@@ -63,7 +63,6 @@
             height: 100vh;
             background-color: var(--light);
             z-index: 1;
-            /* Hide outline on focus */
             outline: none; 
         }
 
@@ -94,29 +93,29 @@
         }
         .circle-btn:active { transform: scale(0.9); }
         .circle-btn svg { width: 22px; height: 22px; fill: var(--dark); }
-        
         .yt-btn svg { fill: #FF0000; }
         .info-btn svg { fill: var(--secondary); }
 
-        /* --- AR BUTTON (Center Overlay) --- */
+        /* --- AR BUTTON (CRITICAL FIX: Position & Visibility) --- */
         .ar-button {
             background-color: var(--dark);
             color: white;
             border-radius: 50px;
             border: none;
             position: absolute;
-            bottom: 110px; /* Above controls */
+            bottom: 110px; 
             left: 50%;
             transform: translateX(-50%);
             padding: 12px 28px;
             font-size: 14px;
             font-weight: 600;
             box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-            z-index: 200;
-            display: flex;
+            z-index: 999; /* Forced High Z-Index */
+            display: flex; /* Default flex, script handles visibility */
             align-items: center;
             gap: 8px;
             cursor: pointer;
+            white-space: nowrap;
         }
 
         /* --- BOTTOM CONTROLS --- */
@@ -149,10 +148,10 @@
         .control-item.active svg { fill: var(--primary); }
         .control-item.active { color: var(--primary); }
 
-        /* --- MODAL (About Animal) --- */
+        /* --- MODAL --- */
         .modal-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); z-index: 300;
+            background: rgba(0,0,0,0.5); z-index: 999;
             display: none; justify-content: center; align-items: center;
             backdrop-filter: blur(5px);
         }
@@ -230,9 +229,10 @@
         auto-rotate 
         autoplay
         shadow-intensity="1.5"
+        ar-scale="auto"
+        ar-placement="floor"
         min-camera-orbit="auto auto 2m"
         max-camera-orbit="auto auto 8m"
-        min-field-of-view="25deg"
         interaction-prompt="none">
         
         <button slot="ar-button" id="ar-btn" class="ar-button">
@@ -269,8 +269,7 @@
         const audioWalk = document.getElementById('audio-walk');
         const audioTrumpet = document.getElementById('audio-trumpet');
 
-        // --- 1. LOGIN SYSTEM (Dummy / Simulated) ---
-        // Replace this function with real Firebase Auth later
+        // --- 1. LOGIN SYSTEM ---
         function handleLogin() {
             const btn = document.getElementById('login-btn');
             const text = document.getElementById('login-text');
@@ -283,11 +282,11 @@
 
             setTimeout(() => {
                 // Success State
-                text.innerText = "Jaiganesh"; // Dummy Name
+                text.innerText = "Jaiganesh"; 
                 icon.style.display = "none";
                 pic.style.display = "block";
                 btn.style.opacity = "1";
-                btn.style.padding = "6px 12px"; // Adjust for avatar
+                btn.style.padding = "6px 12px"; 
                 alert("Welcome back to Zooverse! Signed in as Jaiganesh.");
             }, 1500);
         }
@@ -296,19 +295,21 @@
         function openModal() { document.getElementById('about-modal').style.display = 'flex'; }
         function closeModal() { document.getElementById('about-modal').style.display = 'none'; }
         
-        // Close modal if clicking outside card
         document.getElementById('about-modal').addEventListener('click', (e) => {
             if (e.target.id === 'about-modal') closeModal();
         });
 
-        // --- 3. AUDIO & ANIMATION LOGIC ---
-        // Audio Fix: Set explicit volume
+        // --- 3. AUDIO & ANIMATION ---
         audioWalk.volume = 0.6;
         
         function toggleWalk(btn) {
             if (viewer.paused) {
                 viewer.play();
-                audioWalk.play().catch(e => console.log("Browser blocked audio", e));
+                // Play audio and handle browser auto-play blocks
+                var playPromise = audioWalk.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(error => { console.log("Audio waiting for interaction"); });
+                }
                 btn.classList.add('active');
             } else {
                 viewer.pause();
@@ -320,8 +321,6 @@
         function playTrumpet(btn) {
             audioTrumpet.currentTime = 0;
             audioTrumpet.play();
-            
-            // Visual feedback
             btn.classList.add('active');
             setTimeout(() => btn.classList.remove('active'), 1000);
         }
@@ -333,7 +332,7 @@
             setTimeout(() => btn.classList.remove('active'), 300);
         }
 
-        // --- 4. FEEDING LOGIC (With Rotation) ---
+        // --- 4. FEEDING ---
         const foodMenu = ['🍌', '🍎', '🍉', '🌽', '🥬', '🥜'];
 
         function feedElephant(btn) {
@@ -349,13 +348,9 @@
             const food = document.createElement('div');
             food.classList.add('falling-food');
             
-            // Random Item
             food.innerText = foodMenu[Math.floor(Math.random() * foodMenu.length)];
-            
-            // Random Position
             food.style.left = (Math.random() * 80 + 10) + '%';
             
-            // Random Rotation speed
             const duration = 1.5 + Math.random();
             food.style.animation = `fall ${duration}s linear forwards`;
             
@@ -363,25 +358,29 @@
             setTimeout(() => food.remove(), duration * 1000);
         }
 
-        // --- 5. AR SETUP & ERROR HANDLING ---
+        // --- 5. AR CHECKER ---
         viewer.addEventListener('load', () => {
             const errorMsg = document.getElementById('error-message');
             const arBtn = document.getElementById('ar-btn');
 
             if (viewer.canActivateAR) {
                 errorMsg.style.display = 'none';
-                arBtn.style.display = 'flex';
-                // Try to start walking audio if already playing (Autoplay)
+                arBtn.style.display = 'flex'; // FORCE VISIBLE
+                
+                // Try playing audio if model auto-played
                 if (!viewer.paused) {
-                    audioWalk.play().catch(() => {});
+                    var playPromise = audioWalk.play();
+                    if (playPromise !== undefined) {
+                        playPromise.catch(error => {});
+                    }
                 }
             } else {
                 errorMsg.innerText = "⚠️ device/browser not supported (Use Chrome/Safari).";
                 errorMsg.style.display = 'block';
-                arBtn.style.display = 'none';
+                // Note: We hide the button if AR isn't supported to avoid confusion
+                arBtn.style.display = 'none'; 
             }
         });
-
     </script>
 </body>
 </html>
