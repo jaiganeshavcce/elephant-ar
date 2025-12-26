@@ -2,215 +2,345 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Elephant AR Experience</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Zooverse AR - Elephant Edition</title>
     
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     
     <style>
-        body { margin: 0; background-color: #f0f2f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; }
-        
-        /* The 3D Viewer */
+        :root {
+            --primary: #FF6B6B;
+            --secondary: #4ECDC4;
+            --dark: #2C3E50;
+            --light: #F7F9FC;
+        }
+
+        body { margin: 0; background-color: var(--light); font-family: 'Poppins', sans-serif; overflow: hidden; }
+
+        /* --- HEADER (Branding & Login) --- */
+        .header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-sizing: border-box;
+            z-index: 200;
+            background: linear-gradient(180deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 100%);
+            pointer-events: none; /* Let clicks pass through to 3D model where empty */
+        }
+
+        .brand { pointer-events: auto; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+        .brand h1 { margin: 0; font-size: 18px; color: white; font-weight: 800; letter-spacing: 1px; }
+        .brand p { margin: 0; font-size: 10px; color: rgba(255,255,255,0.8); }
+
+        .auth-btn {
+            pointer-events: auto;
+            background: white;
+            color: var(--dark);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .auth-btn:active { transform: scale(0.95); }
+        .user-avatar { width: 24px; height: 24px; border-radius: 50%; display: none; }
+
+        /* --- 3D VIEWER --- */
         model-viewer {
             width: 100%;
             height: 100vh;
-            background-color: #ffffff;
+            background-color: var(--light);
             z-index: 1;
+            /* Hide outline on focus */
+            outline: none; 
         }
 
-        /* --- TOP RIGHT AR BUTTON --- */
+        /* --- UI LAYER (Right Side) --- */
+        .sidebar {
+            position: absolute;
+            right: 20px;
+            top: 80px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            z-index: 200;
+            pointer-events: auto;
+        }
+
+        .circle-btn {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            border: none;
+            background: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .circle-btn:active { transform: scale(0.9); }
+        .circle-btn svg { width: 22px; height: 22px; fill: var(--dark); }
+        
+        .yt-btn svg { fill: #FF0000; }
+        .info-btn svg { fill: var(--secondary); }
+
+        /* --- AR BUTTON (Center Overlay) --- */
         .ar-button {
-            background-color: #007bff;
+            background-color: var(--dark);
             color: white;
             border-radius: 50px;
             border: none;
             position: absolute;
-            top: 20px;
-            right: 20px;
-            padding: 12px 24px;
+            bottom: 110px; /* Above controls */
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 28px;
             font-size: 14px;
-            font-weight: bold;
-            box-shadow: 0 4px 12px rgba(0,123,255,0.4);
-            z-index: 100;
+            font-weight: 600;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            z-index: 200;
             display: flex;
             align-items: center;
             gap: 8px;
             cursor: pointer;
         }
-        
-        .ar-button:active { transform: scale(0.95); }
-        .ar-button svg { fill: white; width: 18px; height: 18px; }
 
-        /* --- BOTTOM CONTROL BAR --- */
+        /* --- BOTTOM CONTROLS --- */
         .controls {
             position: absolute;
             bottom: 30px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
-            gap: 15px;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 12px 25px;
-            border-radius: 30px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-            backdrop-filter: blur(5px);
-            z-index: 100;
-            align-items: center;
+            gap: 20px;
+            background: white;
+            padding: 12px 30px;
+            border-radius: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            z-index: 200;
         }
 
-        .icon-btn {
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 8px;
-            border-radius: 12px;
-            transition: all 0.2s;
+        .control-item {
             display: flex;
             flex-direction: column;
             align-items: center;
-            color: #555;
-            font-size: 11px;
-            min-width: 50px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #888;
+            font-size: 10px;
+            font-weight: 600;
+        }
+        .control-item svg { width: 24px; height: 24px; fill: #888; margin-bottom: 4px; transition: fill 0.2s; }
+        .control-item.active svg { fill: var(--primary); }
+        .control-item.active { color: var(--primary); }
+
+        /* --- MODAL (About Animal) --- */
+        .modal-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 300;
+            display: none; justify-content: center; align-items: center;
+            backdrop-filter: blur(5px);
+        }
+        .modal-card {
+            background: white; width: 80%; max-width: 350px;
+            padding: 25px; border-radius: 20px; text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            position: relative;
+        }
+        .modal-card h2 { margin: 0 0 10px 0; color: var(--dark); }
+        .modal-card p { color: #666; font-size: 14px; line-height: 1.6; }
+        .close-modal {
+            position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 20px; cursor: pointer; color: #999;
         }
 
-        .icon-btn:active { background-color: #e0e0e0; transform: scale(0.9); }
-        .icon-btn svg { width: 24px; height: 24px; fill: #444; margin-bottom: 4px; }
-        
-        /* Highlight the Feed Button */
-        .feed-btn svg { fill: #f1c40f; } 
-        .feed-btn { color: #d4ac0d; font-weight: bold; }
-
-        /* --- FALLING FOOD ANIMATION --- */
+        /* --- FALLING FOOD --- */
         .falling-food {
-            position: absolute;
-            top: -60px; /* Start above screen */
-            font-size: 45px; /* Big Emoji Size */
-            z-index: 1000; /* On top of EVERYTHING */
-            pointer-events: none; /* Let clicks pass through */
-            /* Animation defined in JS now for randomness */
+            position: absolute; top: -60px; font-size: 45px; z-index: 1000;
+            pointer-events: none;
         }
-
-        @keyframes fall-straight {
-            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-            100% { transform: translateY(90vh) rotate(360deg); opacity: 0; }
-        }
-
-        @keyframes fall-wobble {
-            0% { transform: translateY(0) rotate(0deg) translateX(0); opacity: 1; }
-            50% { transform: translateY(45vh) rotate(180deg) translateX(20px); opacity: 1; }
-            100% { transform: translateY(90vh) rotate(360deg) translateX(-20px); opacity: 0; }
+        @keyframes fall {
+            to { transform: translateY(110vh) rotate(360deg); }
         }
 
         #error-message {
-            position: absolute; top: 80px; left: 50%; transform: translateX(-50%);
-            background-color: #ffebee; color: #c62828; padding: 10px 20px;
-            border-radius: 8px; font-size: 14px; display: none; width: 80%; text-align: center; z-index: 99;
+            position: absolute; top: 70px; left: 50%; transform: translateX(-50%);
+            background: #ffebee; color: #c62828; padding: 10px; border-radius: 8px;
+            font-size: 12px; display: none; width: 80%; text-align: center; z-index: 99;
         }
     </style>
 </head>
 <body>
 
-    <div id="error-message">Checking AR compatibility...</div>
-
-    <audio id="audio-walk" src="walk.mp3"></audio>
+    <audio id="audio-walk" src="walk.mp3" loop></audio>
     <audio id="audio-trumpet" src="trumpet.mp3"></audio>
+
+    <div class="header">
+        <div class="brand">
+            <h1>ZOOVERSE</h1>
+            <p>Bring the Wild to Life</p>
+        </div>
+        <button class="auth-btn" id="login-btn" onclick="handleLogin()">
+            <svg id="g-icon" width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+            <span id="login-text">Sign in</span>
+            <img src="https://ui-avatars.com/api/?name=User&background=random" class="user-avatar" id="user-pic" alt="Profile">
+        </button>
+    </div>
+
+    <div class="sidebar">
+        <button class="circle-btn info-btn" onclick="openModal()">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+        </button>
+        <a href="https://www.youtube.com/@Mishithajk" target="_blank" class="circle-btn yt-btn">
+            <svg viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
+        </a>
+    </div>
+
+    <div class="modal-overlay" id="about-modal">
+        <div class="modal-card">
+            <button class="close-modal" onclick="closeModal()">&times;</button>
+            <h2 id="animal-name">African Elephant</h2>
+            <p id="animal-desc">The African elephant is the largest land animal on Earth. Their large ears radiate heat to help keep them cool.</p>
+        </div>
+    </div>
+
+    <div id="error-message">Checking AR compatibility...</div>
 
     <model-viewer 
         id="viewer"
         src="elephant.glb" 
-        alt="A 3D model of an elephant" 
+        alt="African Elephant" 
         ar 
         ar-modes="webxr scene-viewer quick-look" 
         camera-controls 
         auto-rotate 
         autoplay
-        shadow-intensity="1"
-        ar-scale="auto"
-        ar-placement="floor">
+        shadow-intensity="1.5"
+        min-camera-orbit="auto auto 2m"
+        max-camera-orbit="auto auto 8m"
+        min-field-of-view="25deg"
+        interaction-prompt="none">
         
         <button slot="ar-button" id="ar-btn" class="ar-button">
-            <svg viewBox="0 0 24 24"><path d="M21 16.5l-9-5-9 5v-11l9-5 9 5v11zm-9-13.5l-7.5 4.2v8.8l7.5 4.2 7.5-4.2v-8.8l-7.5-4.2z"/></svg>
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="white"><path d="M21 16.5l-9-5-9 5v-11l9-5 9 5v11zm-9-13.5l-7.5 4.2v8.8l7.5 4.2 7.5-4.2v-8.8l-7.5-4.2z"/></svg>
             View in Room
         </button>
-        
+
     </model-viewer>
 
     <div class="controls">
-        <button class="icon-btn" onclick="toggleAnimation()">
-            <svg id="play-icon" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-            <span>Walk</span>
+        <button class="control-item" onclick="toggleWalk(this)">
+            <svg viewBox="0 0 24 24"><path d="M13.5 5.5c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zM9.8 8.9L7 23h2.1l1.8-8 2.1 2v6h2v-7.5l-2.1-2 .6-3C14.8 12 16.8 13 19 13v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1-.3 0-.5.1-.8.1L6 8.3V13h2V9.6l1.8-.7"/></svg>
+            Walk
         </button>
         
-        <button class="icon-btn" onclick="playTrumpet()">
-            <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
-            <span>Sound</span>
-        </button>
-
-        <button class="icon-btn feed-btn" onclick="feedElephant()">
+        <button class="control-item feed-btn" onclick="feedElephant(this)">
             <svg viewBox="0 0 24 24"><path d="M20.2 17.6l-2.8-7.8c-.4-1.1-1.3-1.9-2.4-2.1-.2 0-.3-.1-.5-.1s-.4 0-.6.1c-1.1.2-2 1.1-2.4 2.1L8.8 17.6c-.3.8.3 1.6 1.1 1.6h1.5c.6 0 1.1-.3 1.4-.8l.7-1.4h4.1l.7 1.4c.3.5.8.8 1.4.8h1.5c.8 0 1.4-.9 1-1.6z"/></svg>
-            <span>Feed</span>
+            Feed
         </button>
 
-        <button class="icon-btn" onclick="resetView()">
-            <svg viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
-            <span>Reset</span>
+        <button class="control-item" onclick="playTrumpet(this)">
+            <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+            Sound
+        </button>
+
+        <button class="control-item" onclick="resetView(this)">
+            <svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zM6 12c0-1.74.52-3.37 1.41-4.74L6.2 6.05C4.81 7.67 4 9.73 4 12c0 4.42 3.58 8 8 8v-3c-2.76 0-5-2.24-5-5z"/></svg>
+            Reset
         </button>
     </div>
 
     <script>
         const viewer = document.querySelector('#viewer');
-        const errorMsg = document.querySelector('#error-message');
-        const arBtn = document.querySelector('#ar-btn');
-        const playIcon = document.querySelector('#play-icon');
         const audioWalk = document.getElementById('audio-walk');
         const audioTrumpet = document.getElementById('audio-trumpet');
-        
-        // Audio Setup
-        audioWalk.loop = true;
-        audioWalk.volume = 0.5;
 
-        // AR SUPPORT CHECK
-        viewer.addEventListener('load', () => {
-            if (viewer.canActivateAR) {
-                errorMsg.style.display = 'none';
-                arBtn.style.display = 'flex';
-                // Try auto-play
-                if (!viewer.paused) {
-                    audioWalk.play().catch(e => console.log("Waiting for user interaction"));
-                }
-            } else {
-                errorMsg.innerText = "⚠️ AR not supported on this device/browser.";
-                errorMsg.style.display = 'block';
-                arBtn.style.display = 'none';
-            }
+        // --- 1. LOGIN SYSTEM (Dummy / Simulated) ---
+        // Replace this function with real Firebase Auth later
+        function handleLogin() {
+            const btn = document.getElementById('login-btn');
+            const text = document.getElementById('login-text');
+            const icon = document.getElementById('g-icon');
+            const pic = document.getElementById('user-pic');
+
+            // Simulate Loading
+            text.innerText = "Signing in...";
+            btn.style.opacity = "0.7";
+
+            setTimeout(() => {
+                // Success State
+                text.innerText = "Jaiganesh"; // Dummy Name
+                icon.style.display = "none";
+                pic.style.display = "block";
+                btn.style.opacity = "1";
+                btn.style.padding = "6px 12px"; // Adjust for avatar
+                alert("Welcome back to Zooverse! Signed in as Jaiganesh.");
+            }, 1500);
+        }
+
+        // --- 2. ABOUT MODAL ---
+        function openModal() { document.getElementById('about-modal').style.display = 'flex'; }
+        function closeModal() { document.getElementById('about-modal').style.display = 'none'; }
+        
+        // Close modal if clicking outside card
+        document.getElementById('about-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'about-modal') closeModal();
         });
 
-        // --- INTERACTIVE FUNCTIONS ---
-
-        function toggleAnimation() {
+        // --- 3. AUDIO & ANIMATION LOGIC ---
+        // Audio Fix: Set explicit volume
+        audioWalk.volume = 0.6;
+        
+        function toggleWalk(btn) {
             if (viewer.paused) {
                 viewer.play();
-                audioWalk.play();
-                playIcon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>'; 
+                audioWalk.play().catch(e => console.log("Browser blocked audio", e));
+                btn.classList.add('active');
             } else {
                 viewer.pause();
                 audioWalk.pause();
-                playIcon.innerHTML = '<path d="M8 5v14l11-7z"/>'; 
+                btn.classList.remove('active');
             }
         }
 
-        function playTrumpet() {
+        function playTrumpet(btn) {
             audioTrumpet.currentTime = 0;
             audioTrumpet.play();
+            
+            // Visual feedback
+            btn.classList.add('active');
+            setTimeout(() => btn.classList.remove('active'), 1000);
         }
 
-        // FOOD MENU
+        function resetView(btn) {
+            viewer.cameraOrbit = "0deg 75deg 105%";
+            viewer.jumpCameraToGoal();
+            btn.classList.add('active');
+            setTimeout(() => btn.classList.remove('active'), 300);
+        }
+
+        // --- 4. FEEDING LOGIC (With Rotation) ---
         const foodMenu = ['🍌', '🍎', '🍉', '🌽', '🥬', '🥜'];
 
-        function feedElephant() {
-            // Drop 10 items for a feast
+        function feedElephant(btn) {
+            btn.classList.add('active');
+            setTimeout(() => btn.classList.remove('active'), 500);
+
             for (let i = 0; i < 10; i++) {
-                // Random delay between 0 and 1500ms
                 setTimeout(() => createFood(), Math.random() * 1500);
             }
         }
@@ -219,31 +349,39 @@
             const food = document.createElement('div');
             food.classList.add('falling-food');
             
-            // 1. Pick Random Food
-            const randomItem = foodMenu[Math.floor(Math.random() * foodMenu.length)];
-            food.innerText = randomItem;
+            // Random Item
+            food.innerText = foodMenu[Math.floor(Math.random() * foodMenu.length)];
             
-            // 2. Random Horizontal Position (10% to 90%)
-            const randomLeft = Math.random() * 80 + 10; 
-            food.style.left = randomLeft + '%';
-
-            // 3. Random Animation (Straight or Wobble)
-            const animType = Math.random() > 0.5 ? 'fall-straight' : 'fall-wobble';
-            food.style.animation = `${animType} 2s ease-in forwards`;
+            // Random Position
+            food.style.left = (Math.random() * 80 + 10) + '%';
+            
+            // Random Rotation speed
+            const duration = 1.5 + Math.random();
+            food.style.animation = `fall ${duration}s linear forwards`;
             
             document.body.appendChild(food);
-
-            // Cleanup
-            setTimeout(() => {
-                food.remove();
-            }, 2000);
+            setTimeout(() => food.remove(), duration * 1000);
         }
 
-        function resetView() {
-            viewer.cameraOrbit = "0deg 75deg 105%";
-            viewer.jumpCameraToGoal();
-        }
+        // --- 5. AR SETUP & ERROR HANDLING ---
+        viewer.addEventListener('load', () => {
+            const errorMsg = document.getElementById('error-message');
+            const arBtn = document.getElementById('ar-btn');
+
+            if (viewer.canActivateAR) {
+                errorMsg.style.display = 'none';
+                arBtn.style.display = 'flex';
+                // Try to start walking audio if already playing (Autoplay)
+                if (!viewer.paused) {
+                    audioWalk.play().catch(() => {});
+                }
+            } else {
+                errorMsg.innerText = "⚠️ device/browser not supported (Use Chrome/Safari).";
+                errorMsg.style.display = 'block';
+                arBtn.style.display = 'none';
+            }
+        });
+
     </script>
-
 </body>
 </html>
